@@ -1,55 +1,103 @@
-let addToy = false;
-let toyCollectionDiv = document.getElementById('toy-collection');
-let submitButton = document.getElementsByClassName('submit')[0];
+const addBtn = document.querySelector('#new-toy-btn')
+const toyForm = document.querySelector('.container')
+let addToy = false
+let divCollect = document.querySelector('#toy-collection')
 
-document.addEventListener("DOMContentLoaded", () => {
-  const addBtn = document.querySelector("#new-toy-btn");
-  const toyFormContainer = document.querySelector(".container");
 
-  addBtn.addEventListener("click", () => {
-    // hide & seek with the form
-    console.log("hi");
-    addToy = !addToy;
-    if (addToy) {
-      toyFormContainer.style.display = "block";
-    } else {
-      toyFormContainer.style.display = "none";
-    }
-  });
-  fetch('http://localhost:3000/toys')
-  .then(response => response.json())
-  .then(data => {
-    data.forEach(obj =>{
-    let cardDiv = document.createElement("div")
-    cardDiv.className = 'card';
-    let h2 = document.createElement("h2");
-    h2.innerHTML = obj.name;
-    let img = document.createElement("img")
-    img.src = obj.image;
-    img.className = 'toy-avatar';
-    let p = document.createElement("p");
-    p.innerHTML = obj.likes + 'Likes';
-    let button = document.createElement("button");
-    button.className = 'like-btn';
-    button.innerHTML = 'Like';
-    cardDiv.appendChild(h2);
-    cardDiv.appendChild(img);
-    cardDiv.appendChild(p);
-    cardDiv.appendChild(button);
-    toyCollectionDiv.appendChild(cardDiv);
-   })
-  })
-  submitButton.addEventListener("click", e =>{
-    e.preventDefault(('http://localhost:3000/toys'),{
-      method: POST,
+function getToys() {
+  return fetch('http://localhost:3000/toys')
+    .then(res => res.json())
+}
+
+function postToy(toy_data) {
+  fetch('http://localhost:3000/toys', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        "name": toy_data.name.value,
+        "image": toy_data.image.value,
+        "likes": 0
+
+      })
+    })
+    .then(res => res.json())
+    .then((obj_toy) => {
+      let new_toy = renderToys(obj_toy)
+      divCollect.append(new_toy)
+    })
+}
+
+function likes(e) {
+  e.preventDefault()
+  let more = parseInt(e.target.previousElementSibling.innerText) + 1
+
+  fetch(`http://localhost:3000/toys/${e.target.id}`, {
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Accept: "application/json"
-      }
-      body: JONS.stringify({
-        //new toy
+        "Accept": "application/json"
+
+      },
+      body: JSON.stringify({
+        "likes": more
       })
-    });
-    fetch('')
+    })
+    .then(res => res.json())
+    .then((like_obj => {
+      e.target.previousElementSibling.innerText = `${more} likes`;
+    }))
+}
+
+function renderToys(toy) {
+  let h2 = document.createElement('h2')
+  h2.innerText = toy.name
+
+  let img = document.createElement('img')
+  img.setAttribute('src', toy.image)
+  img.setAttribute('class', 'toy-avatar')
+
+  let p = document.createElement('p')
+  p.innerText = `${toy.likes} likes`
+
+  let btn = document.createElement('button')
+  btn.setAttribute('class', 'like-btn')
+  btn.setAttribute('id', toy.id)
+  btn.innerText = "like"
+  btn.addEventListener('click', (e) => {
+    console.log(e.target.dataset);
+    likes(e)
   })
-});
+
+  let divCard = document.createElement('div')
+  divCard.setAttribute('class', 'card')
+  divCard.append(h2, img, p, btn)
+  divCollect.append(divCard)
+}
+
+
+// add listener to 'Add Toy' button to show or hide form
+addBtn.addEventListener('click', () => {
+  // hide & seek with the form
+  addToy = !addToy
+  if (addToy) {
+    toyForm.style.display = 'block'
+    toyForm.addEventListener('submit', event => {
+      event.preventDefault()
+      postToy(event.target)
+    })
+  } else {
+    toyForm.style.display = 'none'
+  }
+})
+
+// start by getting all toys
+
+getToys().then(toys => {
+  toys.forEach(toy => {
+    //function to render toys goes here or something
+    renderToys(toy)
+  })
+})
