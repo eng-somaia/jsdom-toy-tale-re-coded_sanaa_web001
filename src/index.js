@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   addBtn.addEventListener("click", () => {
     // hide & seek with the form
+    console.log("hi");
     addToy = !addToy;
     if (addToy) {
       toyFormContainer.style.display = "block";
